@@ -70,30 +70,23 @@ def partA(input: str) -> int:
 
 def partB(input: str) -> int:
     instructions = input.split(',')
-    table = {}
+    table = [LinkedList() for _ in range(256)]
     for i, instruction in enumerate(instructions):
-        print(f'{instruction}: {i} out of {len(instructions)}', end='\r')
         if '=' in instruction:
             K, V = instruction.split('=')
             H = hash(K)
-
-            if H not in table:
-                table[H] = LinkedList()
 
             table[H].add(K,int(V))
         else:
             K = instruction.replace('-', '')
             H = hash(K)
-            if H not in table:
-                continue
             table[H].remove(K)
 
     sum = 0
-    for H in table:
+    for n in range(len(table)):
         i = 1
-        while (V:=table[H].pop()):
-            print((H+1), i, V)
-            sum += (H+1)*V*i
+        while (V:=table[n].pop()):
+            sum += (n+1)*V*i
             i += 1
     return sum
 
@@ -104,4 +97,3 @@ if __name__ == '__main__':
     inp = open(infile).read().strip()
     print(f'A: {partA(inp[::])}')
     print(f'B: {partB(inp[::])}')
-    print(hash("cm"))
