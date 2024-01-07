@@ -25,7 +25,7 @@ def bfs(map: List, root: Tuple):
     visited = set([root])
 
     while Q:
-        N = Q.pop()
+        N = Q.popleft()
         for edge in getEdges(map, N):
             if not (0 <= edge[0] <= len(map)-1) or not (0 <= edge[1] <= len(map[0])-1):
                 continue
