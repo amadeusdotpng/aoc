@@ -1,5 +1,5 @@
 from collections import deque
-from typing import List
+from typing import Dict, List
 
 def verify(map: str, counts: List):
     groups = deque([c for c in map.split('.') if c])
@@ -35,11 +35,16 @@ def partA(input: str):
     return sum
 
 def partB(input: str):
-    pass
+    input = input.splitlines()
+    sum = 0
+    
+    for p, line in enumerate(input):
+        map, counts = line.split()
+        # counts = [int(c) for 
 if __name__ == '__main__':
     import sys
 
     infile = sys.argv[1] if len(sys.argv) > 1 else 'd12.in'
     inp = open(infile).read().strip()
-    # print(f'A: {partA(inp[::])}')
-    print(f'B: {partB(inp[::])}')
+    print(f'A: {partA(inp[::])}')
+    print(f'B: {None}')
