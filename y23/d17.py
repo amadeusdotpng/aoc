@@ -1,35 +1,116 @@
 from collections import namedtuple
 from queue import PriorityQueue 
+from re import A
 from typing import List, Tuple
 
+U = 1
+D = 2
+L = 3
+R = 4
 
-def dijkstra(map: List, root: Tuple):
-    Q = PriorityQueue()
-    Q.put(root)
-    visited = set([(root[1], root[2])])
+Node = namedtuple("node", ["pos", "steps", "dir"])
 
-    while Q:
-        N = Q.get()
-        visited.add((N[1], N[2]))
+def get_neighbors(M: List, N: Node):
+    row, col = N.pos
+    return (
+        Node((row-1, col), N.steps + 1 if N.dir == U or N.dir == 0 else 1, U),
+        Node((row+1, col), N.steps + 1 if N.dir == D or N.dir == 0 else 1, D),
+        Node((row, col-1), N.steps + 1 if N.dir == L or N.dir == 0 else 1, L),
+        Node((row, col+1), N.steps + 1 if N.dir == R or N.dir == 0 else 1, R),
+    )
 
-        for edge in getEdges(N):
-            if not (0 <= edge[0] <= len(map)-1) or not (0 <= edge[1] <= len(map[0])-1):
+def dijkstra_A(M: List, root: Node):
+    end_cost = None
+    # parents = {}
+    visited = set()
+    pq: PriorityQueue[Tuple[int, Node]] = PriorityQueue()
+
+    pq.put(root)
+
+    while pq:
+        cost, N = pq.get(block=False)
+        if N.pos == (len(M)-1, len(M[0])-1):
+            end_cost = cost
+            break
+
+        for E in get_neighbors(M, N):
+            if (E.pos, E.steps, E.dir) in visited:
                 continue
-            if (edge[1], edge[2]) not in visited and edge not in Q:
-                continue
-            if
-            Q.put(edge)
 
+            if not (-1 < E.pos[0] < len(M) and -1 < E.pos[1] < len(M[0])):
+                    continue
+
+            if E.steps > 3:
+                continue
+
+            match (N.dir, E.dir):
+                case (1, 2) | (2, 1) | (3, 4) | (4, 3): continue
+
+            row, col = E.pos
+
+            e_cost = cost + M[row][col]
+
+            visited.add((E.pos, E.steps, E.dir))
+            # parents[(E.pos, E.steps, E.dir)] = (N.pos, N.steps, N.dir)
+            pq.put((e_cost, E), block=False)
+
+    return end_cost
 
 def partA(input: str):
-    map = input.splitlines()
-    # (priority, row, col, # of steps from last turn, parent)
-    root = (0, 0, 0, 0)
-    return dijkstra(map, root)
+    cost_map = [[int(c) for c in line ] for line in input.splitlines()]
+    # (cost, row, col, # of steps from last turn, direction)
+    root = (0, Node((0, 0), 0, 0))
+    return dijkstra_A(cost_map, root)
 
+def dijkstra_B(M: List, root: Node):
+    end_cost = None
+    # parents = {}
+    visited = set()
+    pq: PriorityQueue[Tuple[int, Node]] = PriorityQueue()
+
+    pq.put(root)
+
+    while not pq.empty():
+        cost, N = pq.get(block=False)
+        if N.pos == (len(M)-1, len(M[0])-1) and N.steps >= 4:
+            end_cost = cost
+            break
+
+        for E in get_neighbors(M, N):
+            if (E.pos, E.steps, E.dir) in visited:
+                continue
+
+            if not (-1 < E.pos[0] < len(M) and -1 < E.pos[1] < len(M[0])):
+                    continue
+
+            if E.steps > 10:
+                continue
+
+
+            match (N.dir, E.dir):
+                case (1, 2) | (2, 1) | (3, 4) | (4, 3): continue
+
+            # print(f'{N} -> {E}')
+            if E.dir != N.dir and N.dir != 0 and N.steps < 4:
+                # print(f'{"fail": >{len(str(N))}} -> {E}')
+                continue
+
+
+            row, col = E.pos
+
+            e_cost = cost + M[row][col]
+
+            visited.add((E.pos, E.steps, E.dir))
+            # parents[(E.pos, E.steps, E.dir)] = (N.pos, N.steps, N.dir)
+            pq.put((e_cost, E), block=False)
+
+    return end_cost
 
 def partB(input: str):
-    pass
+    cost_map = [[int(c) for c in line ] for line in input.splitlines()]
+    # (cost, row, col, # of steps from last turn, direction)
+    root = (0, Node((0, 0), 0, 0))
+    return dijkstra_B(cost_map, root)
 
 if __name__ == '__main__':
     import sys
