@@ -2,38 +2,21 @@ from collections import deque
 from functools import cache
 from typing import List, Tuple
 
-
-def verify(map: str, counts: List):
-    groups = deque([c for c in map.split(".") if c])
-    if len(counts) != len(groups):
-        return None
-    for count in counts:
-        group = groups.popleft()
-        if count != len(group):
-            return None
-    return map
-
-
 def partA(input: str):
+    N = 1
     input = input.splitlines()
     sum = 0
+
     for p, line in enumerate(input):
         record, counts = line.split()
-        counts = [int(c) for c in counts.split(",")]
-        n_unknown = record.count("?")
-        arrangements = set()
+
+        record = "?".join(record for _ in range(N))
+        counts = tuple(int(c) for _ in range(N) for c in counts.split(","))
+        count, counts = counts[0], counts[1:]
+
         print(f"{p+1} out of 1000", end="\r")
-        for n in range(2**n_unknown):
-            b = [c for c in f"{n:0>{n_unknown}b}".replace("0", ".").replace("1", "#")]
-            nrecord = ""
-            for c in record:
-                if c == "?":
-                    nrecord += b.popleft()
-                else:
-                    nrecord += c
-            if m := verify(nrecord, counts):
-                arrangements.add(m)
-        sum += len(arrangements)
+        res = dp(record, counts, count, False)
+        sum += res
     print()
     return sum
 
@@ -83,13 +66,10 @@ def dp(record: str, counts: Tuple[int], count: int, started: bool):
           + dp('#'+record, counts, count, started)
         )
 
-def map_replace(S: str, R: str, i: int):
-    return S[:i] + R + S[i + 1 :]
-
 if __name__ == "__main__":
     import sys
 
     infile = sys.argv[1] if len(sys.argv) > 1 else "d12.in"
     inp = open(infile).read().strip()
-    # print(f'A: {partA(inp[::])}')
+    print(f'A: {partA(inp[::])}')
     print(f"B: {partB(inp[::])}")
