@@ -1,8 +1,8 @@
-def partA(input: str):
+def partA(inp: str):
     pass
 
 
-def partB(input: str):
+def partB(inp: str):
     pass
 
 if __name__ == '__main__':
