@@ -7,14 +7,6 @@ def verify(L):
 
     return True
 
-def verify2(L):
-    dir = 1 if L[0] - L[1] < 0 else -1
-    cmp = lambda i, j: 1 <= abs(L[i] - L[j]) <= 3 and ((dir == 1 and L[i] - L[j] < 0) or (dir == -1 and L[i] - L[j] > 0))
-    for k in range(len(L)-1):
-        valid = cmp(k, k+1)
-        if not valid: return k, k+1, False
-
-    return None, None, True
 
 def partA(inp: str):
     I = [list(map(int, line.split())) for line in inp.splitlines()]
@@ -30,6 +22,15 @@ def partB(inp: str):
 
 # finding out what was wrong with my first attempt
 '''
+def verify2(L):
+    dir = 1 if L[0] - L[1] < 0 else -1
+    cmp = lambda i, j: 1 <= abs(L[i] - L[j]) <= 3 and ((dir == 1 and L[i] - L[j] < 0) or (dir == -1 and L[i] - L[j] > 0))
+    for k in range(len(L)-1):
+        valid = cmp(k, k+1)
+        if not valid: return k, k+1, False
+
+    return None, None, True
+
 def partC(inp: str):
     I = [tuple(map(int, line.split())) for line in inp.splitlines()]
     incorrect = set()
