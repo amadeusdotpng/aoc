@@ -1,59 +1,44 @@
-from itertools import chain, product, zip_longest
-from math import gcd
+from functools import cache
+from math import log10, floor
+
+
+@cache
+def verifyA(R, V):
+    if len(V) == 1:
+        return R == V[0]
+    return (
+           (verifyA(R - V[-1], V[:-1]))
+        or (verifyA(R / V[-1], V[:-1]) if R % V[-1] == 0 else False)
+    )
 
 def partA(inp: str):
     S = 0
     for line in inp.splitlines():
-        eq, rest = line.split(': ')
-        eq = int(eq)
-        vals = list(map(int, rest.split()))
-        for k in range(2 ** (len(vals)-1)):
-            N = vals[::]
-            mask = 1
-            ops = []
-            while mask < 2 ** (len(N)-1):
-                if mask & k: ops.append('*')
-                else: ops.append('+')
-                mask <<= 1
+        R, rest = line.split(': ')
+        R = int(R)
+        V = tuple(map(int, rest.split()))
 
-            stack = []
-            while len(N) > 0:
-                stack.append(N.pop(0))
-                if len(stack) == 2:
-                    lhs = stack.pop(0)
-                    rhs = stack.pop(0)
-                    op = ops.pop(0)
-                    if op == '*': stack.append(lhs * rhs)
-                    else: stack.append(lhs + rhs)
-            if stack[0] == eq:
-                S += eq
-                break
+        S += R if verifyA(R, V) else 0
     return S
             
+@cache
+def verifyB(R, V):
+    if len(V) == 1:
+        return R == V[0]
+    return (
+           (verifyB(R - V[-1], V[:-1]))
+        or (verifyB(R / V[-1], V[:-1]) if R % V[-1] == 0 else False)
+        or (verifyB(R//L, V[:-1]) if V[-1] == R % (L := 10**floor(log10(V[-1])+1)) else False)
+    )
+
 def partB(inp: str):
     S = 0
-    inp = inp.splitlines()
-    L = len(inp)
-    for i, line in enumerate(inp):
-        print(f'{i}/{L}', end='\r')
-        eq, rest = line.split(': ')
-        eq = int(eq)
-        vals = list(map(int, rest.split()))
-        for o in product(r'+*\|', repeat=len(vals) - 1):
-            N = vals[::]
-            ops = [c for c in o]
+    for line in inp.splitlines():
+        R, rest = line.split(': ')
+        R = int(R)
+        V = tuple(map(int, rest.split()))
 
-            while len(N) > 1:
-                lhs = N.pop(0)
-                rhs = N.pop(0)
-                op = ops.pop(0)
-                if op == '+': N.insert(0, lhs + rhs)
-                elif op == '*': N.insert(0, lhs * rhs)
-                else: N.insert(0, int(str(lhs) + str(rhs)))
-
-            if N[0] == eq:
-                S += eq
-                break
+        S += R if verifyB(R, V) else 0
     return S
 
 if __name__ == '__main__':
@@ -61,5 +46,5 @@ if __name__ == '__main__':
 
     infile = sys.argv[1] if len(sys.argv) > 1 else 'd07.in'
     inp = open(infile).read().strip()
-    # print(f'A: {partA(inp[::])}')
+    print(f'A: {partA(inp[::])}')
     print(f'B: {partB(inp[::])}')
