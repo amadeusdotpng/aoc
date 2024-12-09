@@ -1,5 +1,4 @@
-from typing import DefaultDict
-
+from collections import defaultdict
 
 def check_update(update, orders_dict):
     for i in range(len(update)-1):
@@ -16,7 +15,7 @@ def partA(inp: str):
     orders = [tuple(map(int, line.split('|'))) for line in orders.splitlines()]
     updates = [list(map(int, line.split(','))) for line in updates.splitlines()]
     
-    orders_dict = DefaultDict(set)
+    orders_dict = defaultdict(set)
     for left, right in orders:
         orders_dict[right].add(left)
 
@@ -47,7 +46,7 @@ def partB(inp: str):
     orders = [tuple(map(int, line.split('|'))) for line in orders.splitlines()]
     updates = [list(map(int, line.split(','))) for line in updates.splitlines()]
     
-    orders_dict = DefaultDict(set)
+    orders_dict = defaultdict(set)
     for left, right in orders:
         orders_dict[right].add(left)
 
