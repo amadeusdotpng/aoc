@@ -2,3 +2,5 @@
 *.ex
 */get_input.py
 y22/*/.txt
+.DS_Store
+*/__pycache__
