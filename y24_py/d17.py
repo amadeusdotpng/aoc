@@ -85,6 +85,38 @@ def partB(inp: str):
             '''
             Q.append((e, idx+1))
 
+def partC(inp: str):
+    _, program = inp.split('\n\n')
+    program = list(map(int, program[9:].split(',')))
+
+    reg = {4: 0, 5: 0, 6: 0}
+    [rest] = run_program(reg, program)
+
+    # from time import sleep
+    # print(''.join(str(k) for k in program))
+    Q = deque([(n, rest) for n in range(8)])
+    while Q:
+        n, rest = Q.popleft()
+        m = n | (rest << 3)
+        reg = {4: m, 5: 0, 6: 0}
+
+        res = run_program(reg, program)
+
+        # print(f'{''.join(str(s) for s in res):X>{len(program)}}', f'{m:0>15}', end='\r')
+        # sleep(0.050)
+
+        if res != program[-len(res):]:
+            continue
+
+        if res == program:
+            # print()
+            return m
+
+        if len(res) > len(program):
+            continue
+
+        for k in range(8):
+            Q.append((k, m))
 
 if __name__ == '__main__':
     import sys
@@ -92,4 +124,4 @@ if __name__ == '__main__':
     infile = sys.argv[1] if len(sys.argv) > 1 else 'd17.in'
     inp = open(infile).read().strip()
     print(f'A: {partA(inp[::])}')
-    print(f'B: {partB(inp[::])}')
+    print(f'B: {partC(inp[::])}')
