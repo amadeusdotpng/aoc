@@ -48,26 +48,7 @@ def partA(inp: str):
     out = run_program(reg, program)
     return ','.join(str(n) for n in out)
 
-
 def partB(inp: str):
-    out = []
-    reg, program = inp.split('\n\n')
-    # reg = {idx+4: int(r[12:]) for idx, r in enumerate(reg.splitlines())}
-    program = list(map(int, program[9:].split(',')))
-
-    k = 0
-    reg = {4: k, 5: 0, 6: 0}
-    out = run_program(reg, program)
-
-    while out != program:
-        # print(k, end='\r')
-        k += 1
-        reg = {4: k, 5: 0, 6: 0}
-        out = run_program(reg, program)
-
-    return k
-
-def partC(inp: str):
     _, program = inp.split('\n\n')
     program = list(map(int, program[9:].split(',')))
 
@@ -111,5 +92,4 @@ if __name__ == '__main__':
     infile = sys.argv[1] if len(sys.argv) > 1 else 'd17.in'
     inp = open(infile).read().strip()
     print(f'A: {partA(inp[::])}')
-    # print(f'B: {partB(inp[::])}')
-    print(f'C: {partC(inp[::])}')
+    print(f'B: {partB(inp[::])}')
