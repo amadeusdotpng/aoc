@@ -2,6 +2,10 @@ from itertools import combinations, pairwise
 from collections import defaultdict
 import multiprocessing as mp
 from functools import partial
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.collections as mc
+import matplotlib.animation as animation
 
 
 def partA(inp: str):
@@ -24,71 +28,72 @@ def is_inside(p, E):
 
     return intersections % 2 == 1
 
-def f(E, p):
+def f(E, p) -> tuple[int, tuple[tuple[int, ...], tuple[int, ...]]]:
     (ax, ay), (bx, by) = p
-    if not (is_inside((ax, by), E) and is_inside((bx, ay), E)):
-        return 0
 
     min_x, max_x = min(ax, bx), max(ax, bx)
     min_y, max_y = min(ay, by), max(ay, by)
     e_v = [(ax, min_y, max_y), (bx, min_y, max_y)]
     e_h = [(ay, min_x, max_x), (by, min_x, max_x)]
-
     if any(any(is_intersecting(e, (vx, *vy)) for vy in vys) for e in e_h for vx, vys in E['V'].items()):
-        return 0
+        return (0, p)
 
     if any(any(is_intersecting(e, (hy, *hx)) for hx in hxs) for e in e_v for hy, hxs in E['H'].items()):
-        return 0
+        return (0, p)
 
-    return (abs(bx - ax) + 1) * (abs(by - ay) + 1)
+    s = 1 if ay > by else -1
+    if not (is_inside((ax, by+s), E) and is_inside((bx, ay-s), E)):
+        return (0, p)
 
-def partB(inp: str):
+
+    return ((abs(bx - ax) + 1) * (abs(by - ay) + 1), p)
+
+def partB(inp: str, anim=False):
     P = [tuple(map(int, line.split(','))) for line in inp.split('\n')]
     E = {'H': defaultdict(set), 'V': defaultdict(set)}
     for (ax, ay), (bx, by) in pairwise([*P, P[0]]):
         if ax == bx: E['V'][ax].add((min(ay, by), max(ay, by)))
         if ay == by: E['H'][ay].add((min(ax, bx), max(ax, bx)))
 
-    pool = mp.Pool(processes=10)
     M = 0
-    for n, m in enumerate(pool.imap_unordered(partial(f, E), combinations(P, 2))):
-        M = max(M, m)
-        if n % 100 == 0:
-            print(f'\r{n: >6}/122760')
+    P1, P2 = None, None
+    def frames():
+        nonlocal M
+        nonlocal P1, P2
+        pool = mp.Pool(processes=10)
+        for m, (a, b) in pool.imap_unordered(partial(f, E), combinations(P, 2)):
+            if m > M:
+                M = m
+                P1, P2 = a, b
 
-    # M = 0
-    # P1, P2 = None, None
-    # for n, ((ax, ay), (bx, by)) in enumerate(combinations(P, 2)):
-    #     if n % 100 == 0:
-    #         print(f'{n}/120786')
-    #     A = (abs(bx - ax) + 1) * (abs(by - ay) + 1)
-    #     if not (is_inside((ax, by), E) and is_inside((bx, ay), E)):
-    #         if (ax, ay) == (9, 5) and (bx, by) == (2, 3) or (ax, ay) == (2, 3) and (bx, by) == (9, 5):
-    #             print('one of the points are outside')
-    #             print((ax, by), is_inside((ax, by), E))
-    #             print((bx, ay), is_inside((bx, ay), E))
+            yield ((a, b), (P1, P2))
 
-    #         continue
+    if anim:
+        L = [[(ax, ay), (bx, by)] for (ax, ay), (bx, by) in pairwise([*P, P[0]])]
+        poly = mc.LineCollection(L)
+        rect = mc.LineCollection([], colors=[(1, 0, 0, 1)]*4+[(0, 1, 0, 1)]*4)
+        fig, ax = plt.subplots()
+        ax.add_collection(poly)
+        ax.add_collection(rect)
+        ax.autoscale()
 
-    #     min_x, max_x = min(ax, bx), max(ax, bx)
-    #     min_y, max_y = min(ay, by), max(ay, by)
-    #     e_v = [(ax, min_y, max_y), (bx, min_y, max_y)]
-    #     e_h = [(ay, min_x, max_x), (by, min_x, max_x)]
+        def animate(frame):
+            segments = [
+                ([(a[0], a[1]), (b[0], a[1])],
+                 [(a[0], a[1]), (a[0], b[1])],
+                 [(b[0], b[1]), (b[0], a[1])],
+                 [(b[0], b[1]), (a[0], b[1])])
+                for (a, b) in frame
+                if a is not None and b is not None
+            ]
+            segments = [e for t in segments for e in t]
+            rect.set_segments(segments)
+            return rect,
 
-    #     if any(any(is_intersecting(e, (vx, *vy)) for vy in vys) for e in e_h for vx, vys in E['V'].items()):
-    #         if (ax, ay) == (9, 5) and (bx, by) == (2, 3) or (ax, ay) == (2, 3) and (bx, by) == (9, 5):
-    #             print('horizontal edge is intersecting vertical edge')
-    #         continue
-
-    #     if any(any(is_intersecting(e, (hy, *hx)) for hx in hxs) for e in e_v for hy, hxs in E['H'].items()):
-    #         if (ax, ay) == (9, 5) and (bx, by) == (2, 3) or (ax, ay) == (2, 3) and (bx, by) == (9, 5):
-    #             print('vertical edge is intersecting horizontal edge')
-    #         continue
-
-    #     if A > M:
-    #         M = A
-    #         P1, P2 = (ax, ay), (bx, by)
-
+        _ = animation.FuncAnimation(fig, animate, frames=frames, interval=30)
+        plt.show()
+    else:
+        for _ in frames(): pass
 
     return M
 
