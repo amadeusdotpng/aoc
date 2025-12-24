@@ -49,7 +49,7 @@ def partB(inp: str):
         if ax == bx: E['V'][ax].add((min(ay, by), max(ay, by)))
         if ay == by: E['H'][ay].add((min(ax, bx), max(ax, bx)))
 
-    pool = mp.Pool(processes=6)
+    pool = mp.Pool(processes=10)
     M = 0
     for n, m in enumerate(pool.imap_unordered(partial(f, E), combinations(P, 2))):
         M = max(M, m)
@@ -90,7 +90,7 @@ def partB(inp: str):
     #         P1, P2 = (ax, ay), (bx, by)
 
 
-    return M, P1, P2
+    return M
 
 
 
