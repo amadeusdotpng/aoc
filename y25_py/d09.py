@@ -1,96 +1,98 @@
 from itertools import combinations, pairwise
+from collections import defaultdict
+import multiprocessing as mp
+from functools import partial
+
 
 def partA(inp: str):
-    V = [tuple(map(int, line.split(','))) for line in inp.split('\n')]
-    return sorted((abs(ax - bx) + 1) * (abs(by - ay) + 1) for (ax, ay), (bx, by) in combinations(V, 2))[-1]
+    P = [tuple(map(int, line.split(','))) for line in inp.split('\n')]
+    return sorted((abs(bx - ax) + 1) * (abs(by - ay) + 1) for (ax, ay), (bx, by) in combinations(P, 2))[-1]
+
+def is_intersecting(e_1, e_2):
+    return e_2[1] < e_1[0] < e_2[2] and e_1[1] < e_2[0] < e_1[2]
+
+def is_inside(p, E):
+    px, py = p
+    intersections = 0
+    inside_horizontal = False
+    while px > 0:
+        if any(b <= py <= t for b, t in E['V'][px]) and not inside_horizontal:
+            intersections += 1
+
+        inside_horizontal = any(l <= px <= r for l, r in E['H'][py])
+        px -= 1
+
+    return intersections % 2 == 1
+
+def f(E, p):
+    (ax, ay), (bx, by) = p
+    if not (is_inside((ax, by), E) and is_inside((bx, ay), E)):
+        return 0
+
+    min_x, max_x = min(ax, bx), max(ax, bx)
+    min_y, max_y = min(ay, by), max(ay, by)
+    e_v = [(ax, min_y, max_y), (bx, min_y, max_y)]
+    e_h = [(ay, min_x, max_x), (by, min_x, max_x)]
+
+    if any(any(is_intersecting(e, (vx, *vy)) for vy in vys) for e in e_h for vx, vys in E['V'].items()):
+        return 0
+
+    if any(any(is_intersecting(e, (hy, *hx)) for hx in hxs) for e in e_v for hy, hxs in E['H'].items()):
+        return 0
+
+    return (abs(bx - ax) + 1) * (abs(by - ay) + 1)
 
 def partB(inp: str):
-    def inside(v):
-        x, y = v
-        if any(l <= x <= r and y == hy for l, r, hy in E['H']):
-            return True
+    P = [tuple(map(int, line.split(','))) for line in inp.split('\n')]
+    E = {'H': defaultdict(set), 'V': defaultdict(set)}
+    for (ax, ay), (bx, by) in pairwise([*P, P[0]]):
+        if ax == bx: E['V'][ax].add((min(ay, by), max(ay, by)))
+        if ay == by: E['H'][ay].add((min(ax, bx), max(ax, bx)))
 
-        if any(l <= y <= r and x == vx for l, r, vx in E['V']):
-            return True
+    pool = mp.Pool(processes=6)
+    M = 0
+    for n, m in enumerate(pool.imap_unordered(partial(f, E), combinations(P, 2))):
+        M = max(M, m)
+        if n % 100 == 0:
+            print(f'\r{n: >6}/122760')
 
-        y += 1
+    # M = 0
+    # P1, P2 = None, None
+    # for n, ((ax, ay), (bx, by)) in enumerate(combinations(P, 2)):
+    #     if n % 100 == 0:
+    #         print(f'{n}/120786')
+    #     A = (abs(bx - ax) + 1) * (abs(by - ay) + 1)
+    #     if not (is_inside((ax, by), E) and is_inside((bx, ay), E)):
+    #         if (ax, ay) == (9, 5) and (bx, by) == (2, 3) or (ax, ay) == (2, 3) and (bx, by) == (9, 5):
+    #             print('one of the points are outside')
+    #             print((ax, by), is_inside((ax, by), E))
+    #             print((bx, ay), is_inside((bx, ay), E))
 
-        p = 0
-        while y < V_max:
-            p += any(l <= x <= r and y == hy for l, r, hy in E['H'])
-            y += 1
+    #         continue
 
-        return p % 2 == 1
+    #     min_x, max_x = min(ax, bx), max(ax, bx)
+    #     min_y, max_y = min(ay, by), max(ay, by)
+    #     e_v = [(ax, min_y, max_y), (bx, min_y, max_y)]
+    #     e_h = [(ay, min_x, max_x), (by, min_x, max_x)]
 
-    V = [tuple(map(int, line.split(','))) for line in inp.split('\n')]
-    # H_max = max(V, key=lambda v: v[0])[0]
-    V_max = max(V, key=lambda v: v[1])[1]
+    #     if any(any(is_intersecting(e, (vx, *vy)) for vy in vys) for e in e_h for vx, vys in E['V'].items()):
+    #         if (ax, ay) == (9, 5) and (bx, by) == (2, 3) or (ax, ay) == (2, 3) and (bx, by) == (9, 5):
+    #             print('horizontal edge is intersecting vertical edge')
+    #         continue
 
-    E = {'H': set(), 'V': set()}
-    for (ax, ay), (bx, by) in pairwise(V):
-        if ay == by:
-            E['H'].add((*sorted((ax, bx)), by))
-            continue
-        if ax == bx:
-            E['V'].add((*sorted((ay, by)), bx))
-            continue
+    #     if any(any(is_intersecting(e, (hy, *hx)) for hx in hxs) for e in e_v for hy, hxs in E['H'].items()):
+    #         if (ax, ay) == (9, 5) and (bx, by) == (2, 3) or (ax, ay) == (2, 3) and (bx, by) == (9, 5):
+    #             print('vertical edge is intersecting horizontal edge')
+    #         continue
 
-        raise ValueError((ax, ay, bx, by))
+    #     if A > M:
+    #         M = A
+    #         P1, P2 = (ax, ay), (bx, by)
 
-    A = 0
-    for (ax, ay), (bx, by) in combinations(V, 2):
-        v_0 = (ax, by)
-        v_1 = (bx, ay)
-        if inside(v_0) and inside(v_1):
-            print((ax, ay), (bx, by))
-            A = max(A, (abs(ax - bx) + 1) * (abs(by - ay) + 1))
 
-    return A
+    return M, P1, P2
 
-def partB2(inp: str):
-    def inside(v):
-        x, y = v
-        if (x, y) in E:
-            return True
 
-        y += 1
-        p = 0
-        while y < V_max:
-            p += (x, y) in E 
-            y += 1
-
-        return p % 2 == 1
-
-    V = [tuple(map(int, line.split(','))) for line in inp.split('\n')]
-    # H_max = max(V, key=lambda v: v[0])[0]
-    V_max = max(V, key=lambda v: v[1])[1]
-
-    E = set()
-    for (ax, ay), (bx, by) in pairwise([*V, V[0]]):
-        if ay == by:
-            E.update((x, by) for x in range(min(ax, bx), max(ax, bx) + 1))
-            continue
-
-        if ax == bx:
-            E.update((bx, y) for y in range(min(ay, by), max(ay, by) + 1))
-            continue
-
-        raise ValueError((ax, ay, bx, by))
-
-    print(len(E))
-
-    A = 0
-    c = 0
-    for idx, ((ax, ay), (bx, by)) in enumerate(combinations(V, 2)):
-        v_0 = (ax, by)
-        v_1 = (bx, ay)
-        if inside(v_0) and inside(v_1):
-            A = max(A, (abs(ax - bx) + 1) * (abs(by - ay) + 1))
-            if c % 100 == 0:
-                print(f'{idx: >6}/122760 {(ax, ay)}, {(bx, by)}, {A}')
-            c += 1
-
-    return A
 
 if __name__ == '__main__':
     import sys
@@ -98,5 +100,4 @@ if __name__ == '__main__':
     infile = sys.argv[1] if len(sys.argv) > 1 else 'd09.in'
     inp = open(infile).read().strip()
     print(f'A: {partA(inp[::])}')
-    # print(f'B: {partB(inp[::])}')
-    print(f'B: {partB2(inp[::])}')
+    print(f'B: {partB(inp[::])}')
